@@ -19,9 +19,6 @@ pipeline {
 
     stages {
         stage('Checkout') {
-            when { 
-                branch 'main'
-            }
             steps {
                 git branch: 'main',
                      credentialsId: 'jenkins-github',
@@ -30,9 +27,6 @@ pipeline {
         }
 
         stage('Build Images') {
-            when { 
-                branch 'main'
-            }
             parallel {
                 stage('Build Client') {
                     steps {
@@ -56,9 +50,6 @@ pipeline {
         }
 
         stage('Push to Registry') {
-            when { 
-                branch 'main'
-            }
             steps {
                 script {
                     // Push client image with build number tag and latest
@@ -163,6 +154,17 @@ pipeline {
                 }
             }
         }
+        
+        stage('Teardown Test Deployment') {
+            steps {
+                echo "Stopping test containers"
+                sh '''
+                    docker stop minido-client minido-server minido-mongodb || true
+                    docker rm minido-client minido-server minido-mongodb || true
+                '''
+                sh 'docker network prune -f || true'
+            }
+        }        
     }
 
     post {

@@ -1,0 +1,49 @@
+services:
+  minido-client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: minido-client
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Asia/Kuala_Lumpur
+    ports:
+      - "8380:80"
+    depends_on:
+      - minido-server
+    restart: unless-stopped
+  minido-server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: minido-server
+    ports:
+      - "30000:30000"
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Asia/Kuala_Lumpur
+      - NODE_ENV=development
+      - MONGO_URI=${MONGO_URI} #example: mongodb://username:password@mongodb:27017/minido?authSource=admin
+      - PORT=30000
+    depends_on:
+      - minido-mongodb
+    restart: unless-stopped
+  minido-mongodb:
+    container_name: minido-mongodb
+    image: mongo:8.0.9
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Asia/Kuala_Lumpur
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_PASS}
+    ports:
+      - "27018:27017"
+    volumes:
+      - minido_mongodb_data:/data/db
+    restart: unless-stopped
+volumes:
+  minido_mongodb_data:
+    external: true
